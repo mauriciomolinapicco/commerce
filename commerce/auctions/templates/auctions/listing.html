@@ -1,0 +1,64 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+    <h3>{{ auction.title }}</h3>
+
+    <img src="{{ auction.imageUrl }}" alt="">
+    <p>{{ auction.description }}</p>
+    <p>${{ currentBid.amount }}</p>
+
+    {% if auction.category %}
+        <p>Category: <a href="{% url 'category' categoryId=auction.category.id %}">{{ auction.category }}</a> </p>
+    {% endif %}
+
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
+    {% if auction.isActive %}
+        <p>{{ auction.numberOfBids }} bid(s) so far. {% if currentBid.user == user %}Your bid is the current bid. {% endif%} </p>
+        <form action="{% url 'placebid' %}" method="post">
+            {% csrf_token %}
+            <input type="number" placeholder="Bid" name="bid"> <br>
+            <input type="hidden" name="id" value="{{ auction.id }}">
+            <input type="submit" value="Place Bid">
+        </form>
+        <p></p>
+    {% else %}
+        <p>This listing is finished</p>
+        {% if auction.winner%}
+            {% if auction.winner == user %}
+                <h2>You won the auction!</h2>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+
+    {% if user.is_authenticated %}
+        {% if isListingInWatchlist %}
+            <a href="{% url 'removeWatchlist' auctionid=auction.id %}">Remove from watchlist</a>
+        {% else %}
+            <a href="{% url 'addWatchlist' auctionid=auction.id %}">Add to watchlist</a>
+        {% endif %}
+    {% endif %}
+    <p></p>
+    {% if user == auction.user %}
+    <a href="{% url 'finishListing' listingId=auction.id %}" class="btn btn-danger">Finish listing</a> <br>
+    {% endif %}
+    <h3>Comments</h3>
+    {% if user.is_authenticated %}
+        <form action="{% url 'comment' %}" method="post">
+            {% csrf_token %}
+            <label for="comment">Make a comment</label>
+            <input type="text" name="comment" placeholder="Comment">
+            <input type="hidden" name="listing" value="{{ auction.id }}">
+            <input type="submit" value="Comment">
+        </form>
+    {% endif %}
+
+    {% for comment in comments %}
+        <li>{{ comment.user }} commented:  {{ comment.comment }}</li>
+    {% endfor %}
+
+{% endblock %}
